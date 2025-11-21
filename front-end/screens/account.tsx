@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
+import { useNavigation } from "@react-navigation/native"; 
 import Ionicons from "react-native-vector-icons/Ionicons";
 import Svg, { Path } from "react-native-svg";
 
@@ -75,6 +76,7 @@ const WaterDrop: React.FC<WaterDropProps> = ({ waterLevel, currentHydration, dai
 };
 
 const HydrationTracker: React.FC = () => {
+  const navigation = useNavigation();
   const [selectedAmount, setSelectedAmount] = useState<number>(250);
   const [currentHydration, setCurrentHydration] = useState<number>(750);
   const waterLevel = useRef(new Animated.Value(750 / 2500)).current;
@@ -195,12 +197,14 @@ const HydrationTracker: React.FC = () => {
         >
           <View style={styles.headerContent}>
             <View style={styles.userInfo}>
+            <TouchableOpacity onPress={() => navigation.navigate("Profile")}>
               <Image
                 source={{
                   uri: "https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/5747d283-5cd8-4eef-ab39-c0088e4590dd",
                 }}
                 style={styles.avatar}
               />
+            </TouchableOpacity>
               <View>
                 <Text style={styles.greeting}>Hello,</Text>
                 <Text style={styles.username}>user123</Text>
@@ -334,35 +338,42 @@ const HydrationTracker: React.FC = () => {
         </View>
 
         {/* Navigation */}
+        {/* Navigation Menu */}
         <LinearGradient
           colors={['#60A7D2', '#4A90BF']}
           style={styles.navigation}
         >
           <View style={styles.navItems}>
-            <TouchableOpacity style={styles.navItem}>
-              <Ionicons name="home" size={24} color="#FFFFFF" />
-              <Text style={styles.navText}>Home</Text>
+            <TouchableOpacity 
+              style={styles.navItem}
+              onPress={() => navigation.navigate('Tracker')}
+            >
+              <Ionicons name="stats-chart" size={20} color="#FFFFFF" />
+              <Text style={styles.navText}>Stats</Text>
             </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.navItem}>
-              <Ionicons name="map" size={24} color="#FFFFFF" />
+  
+            <TouchableOpacity 
+              style={styles.navItem} 
+              onPress={() => navigation.navigate('Map')}
+            >
+              <Ionicons name="map" size={20} color="#FFFFFF" />
               <Text style={styles.navText}>Map</Text>
             </TouchableOpacity>
-            
-            <TouchableOpacity style={[styles.navItem, styles.navItemCenter]}>
-              <View style={styles.centerNavButton}>
-                <Ionicons name="add" size={28} color="#60A7D2" />
-              </View>
+  
+            <TouchableOpacity
+              style={styles.navItem}
+              onPress={() => navigation.navigate('Locations')}
+            >
+              <Ionicons name="location" size={20} color="#FFFFFF" />
+              <Text style={styles.navText}>Locations</Text>
             </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.navItem}>
-              <Ionicons name="gift" size={24} color="#FFFFFF" />
-              <Text style={styles.navText}>Rewards</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.navItem}>
-              <Ionicons name="person" size={24} color="#FFFFFF" />
-              <Text style={styles.navText}>Profile</Text>
+  
+            <TouchableOpacity 
+              style={styles.navItem} 
+              onPress={() => navigation.navigate('Account')}
+            >
+              <Ionicons name="person" size={20} color="#FFFFFF" />
+              <Text style={styles.navText}>Account</Text>
             </TouchableOpacity>
           </View>
         </LinearGradient>

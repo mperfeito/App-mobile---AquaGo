@@ -9,6 +9,7 @@ import {
   TextInput,
   Dimensions
 } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import Ionicons from "react-native-vector-icons/Ionicons";
@@ -30,6 +31,7 @@ type SavedLocation = {
 };
 
 export default () => {
+  const navigation = useNavigation(); 
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState('all');
   const [selectedLocation, setSelectedLocation] = useState<SavedLocation | null>(null);
@@ -143,9 +145,16 @@ export default () => {
   };
 
   const getDirections = (location: SavedLocation) => {
-    // Implementar navegação
+    // Implementar navegação para direções
     console.log('Get directions to:', location.name);
   };
+
+  const viewLocationDetails = (location: SavedLocation) => {
+    navigation.navigate('BottomSheet', { 
+      location: location // Passa o objeto completo do local
+    });
+  };
+  
 
   const initialRegion: Region = {
     latitude: 40.7829,
@@ -343,26 +352,30 @@ export default () => {
                 </View>
 
                 {selectedLocation?.id === location.id && (
-                  <View style={styles.locationDetails}>
-                    <TouchableOpacity 
-                      style={styles.detailButton}
-                      onPress={() => getDirections(location)}
+                <View style={styles.locationDetails}>
+                  <TouchableOpacity 
+                    style={styles.detailButton}
+                    onPress={() => getDirections(location)}
+                  >
+                    <LinearGradient
+                      colors={['#60A7D2', '#4A90BF']}
+                      style={styles.detailGradient}
                     >
-                      <LinearGradient
-                        colors={['#60A7D2', '#4A90BF']}
-                        style={styles.detailGradient}
-                      >
-                        <Ionicons name="navigate" size={16} color="#FFFFFF" />
-                        <Text style={styles.detailButtonText}>Get Directions</Text>
-                      </LinearGradient>
-                    </TouchableOpacity>
-                    
-                    <TouchableOpacity style={styles.secondaryButton}>
-                      <Ionicons name="information-circle" size={16} color="#60A7D2" />
-                      <Text style={styles.secondaryButtonText}>View Details</Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
+                      <Ionicons name="navigate" size={16} color="#FFFFFF" />
+                      <Text style={styles.detailButtonText}>Get Directions</Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
+                  
+                  {/* BOTÃO ATUALIZADO - AGORA USA viewLocationDetails */}
+                  <TouchableOpacity 
+                    style={styles.secondaryButton}
+                    onPress={() => viewLocationDetails(location)} // ← MUDOU AQUI
+                  >
+                    <Ionicons name="information-circle" size={16} color="#60A7D2" />
+                    <Text style={styles.secondaryButtonText}>View Details</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
               </TouchableOpacity>
             ))
           )}
@@ -374,22 +387,34 @@ export default () => {
           style={styles.navigation}
         >
           <View style={styles.navItems}>
-            <TouchableOpacity style={styles.navItem}>
+            <TouchableOpacity 
+              style={styles.navItem}
+              onPress={() => navigation.navigate('Tracker')} 
+            >
               <Ionicons name="stats-chart" size={20} color="#FFFFFF" />
               <Text style={styles.navText}>Stats</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.navItem}>
+            <TouchableOpacity 
+              style={styles.navItem}
+              onPress={() => navigation.navigate('Map')} 
+            >
               <Ionicons name="map" size={20} color="#FFFFFF" />
               <Text style={styles.navText}>Map</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.navItem}>
+            <TouchableOpacity 
+              style={styles.navItem}
+              onPress={() => navigation.navigate('Locations')} 
+            >
               <Ionicons name="location" size={20} color="#FFFFFF" />
               <Text style={styles.navText}>Locations</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.navItem}>
+            <TouchableOpacity 
+              style={styles.navItem}
+              onPress={() => navigation.navigate('Account')} 
+            >
               <Ionicons name="person" size={20} color="#FFFFFF" />
               <Text style={styles.navText}>Profile</Text>
             </TouchableOpacity>

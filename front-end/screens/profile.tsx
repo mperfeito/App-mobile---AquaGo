@@ -12,7 +12,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
-import Ionicons from "react-native-vector-icons/Ionicons";
+import Ionicons from "react-native-vector-icons/Ionicons";  
+import { useNavigation } from "@react-navigation/native";
 
 // Definir tipos TypeScript
 type UserData = {
@@ -31,6 +32,8 @@ type ActivityLevel = "sedentary" | "moderate" | "active" | "veryActive";
 type ClimateType = "cold" | "temperate" | "hot" | "veryHot";
 
 export default () => {
+  const navigation = useNavigation();
+
   const [userData, setUserData] = useState<UserData>({
     fullName: "John Doe",
     email: "john.doe@email.com",
@@ -372,24 +375,36 @@ export default () => {
           style={styles.navigation}
         >
           <View style={styles.navItems}>
-            <TouchableOpacity style={styles.navItem}>
+            <TouchableOpacity 
+              style={styles.navItem}
+              onPress={() => navigation.navigate('Tracker')}
+            >
               <Ionicons name="stats-chart" size={20} color="#FFFFFF" />
               <Text style={styles.navText}>Stats</Text>
             </TouchableOpacity>
-
-            <TouchableOpacity style={styles.navItem}>
+  
+            <TouchableOpacity 
+              style={styles.navItem} 
+              onPress={() => navigation.navigate('Map')}
+            >
               <Ionicons name="map" size={20} color="#FFFFFF" />
               <Text style={styles.navText}>Map</Text>
             </TouchableOpacity>
-
-            <TouchableOpacity style={styles.navItem}>
+  
+            <TouchableOpacity
+              style={styles.navItem}
+              onPress={() => navigation.navigate('Locations')}
+            >
               <Ionicons name="location" size={20} color="#FFFFFF" />
               <Text style={styles.navText}>Locations</Text>
             </TouchableOpacity>
-
-            <TouchableOpacity style={styles.navItem}>
+  
+            <TouchableOpacity 
+              style={styles.navItem} 
+              onPress={() => navigation.navigate('Account')}
+            >
               <Ionicons name="person" size={20} color="#FFFFFF" />
-              <Text style={styles.navText}>Profile</Text>
+              <Text style={styles.navText}>Account</Text>
             </TouchableOpacity>
           </View>
         </LinearGradient>

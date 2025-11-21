@@ -13,7 +13,7 @@ import {
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { LinearGradient } from "expo-linear-gradient";
 
-export default () => {
+export default ({ navigation }: any ) => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -32,10 +32,12 @@ export default () => {
       return;
     }
     alert(`Account created successfully!\nName: ${name}\nEmail: ${email}`);
+    navigation.navigate("Map");
   };
 
   const handleLoginRedirect = () => {
     alert("Navigate to login screen");
+    navigation.navigate("Login");
   };
 
   const passwordRequirements = [
@@ -71,14 +73,14 @@ export default () => {
 
         {/* Tab Selection */}
         <View style={styles.tabContainer}>
-          <TouchableOpacity 
-            style={[styles.tab, !isSignUpActive && styles.activeTab]}
-            onPress={() => setIsSignUpActive(false)}
-          >
-            <Text style={[styles.tabText, !isSignUpActive && styles.activeTabText]}>
-              Login
-            </Text>
-          </TouchableOpacity>
+        <TouchableOpacity 
+          style={[styles.tab, !isSignUpActive && styles.activeTab]}
+          onPress={() => navigation.navigate('Login')} // ← Muda aqui
+        >
+          <Text style={[styles.tabText, !isSignUpActive && styles.activeTabText]}>
+            Login
+          </Text>
+        </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.tab, isSignUpActive && styles.activeTab]}
             onPress={() => setIsSignUpActive(true)}

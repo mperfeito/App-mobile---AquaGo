@@ -9,6 +9,8 @@ import {
   Animated
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { LineChart, BarChart } from "react-native-chart-kit";
@@ -17,12 +19,34 @@ const { width, height } = Dimensions.get('window');
 const CHART_WIDTH = width - 64;
 const CHART_HEIGHT = 200;
 
+// Define your navigation stack types (same as in map.tsx)
+type RootStackParamList = {
+  Splash: undefined;
+  OnBoarding1: undefined;
+  OnBoarding2: undefined;
+  OnBoarding3: undefined;
+  OnBoarding4: undefined;
+  Login: undefined;
+  SignUp: undefined;
+  Account: undefined;
+  Comments: undefined;
+  BottomSheet: undefined;
+  Locations: undefined;
+  Map: undefined;
+  Profile: undefined;
+  Tracker: undefined;
+};
+
+// Create navigation prop type
+type TrackerScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
 // Definir tipos para as props
 interface AnimatedStatCardProps {
   children: React.ReactNode;
   onPress: () => void;
-  style?: any; // Tornado opcional com ?
+  style?: any;
 }
+
 // Componente de card animado (igual ao dos transportes)
 const AnimatedStatCard: React.FC<AnimatedStatCardProps> = ({ 
   children, 
@@ -87,6 +111,7 @@ const AnimatedStatCard: React.FC<AnimatedStatCardProps> = ({
 };
 
 const StatsScreen: React.FC = () => {
+  const navigation = useNavigation<TrackerScreenNavigationProp>();
   const [activeTab, setActiveTab] = useState<'daily' | 'weekly' | 'monthly'>('daily');
   const [selectedDate, setSelectedDate] = useState(new Date());
 
@@ -356,28 +381,40 @@ const StatsScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* Navigation Menu */}
+        {/* Navigation Menu - Updated with proper navigation */}
         <LinearGradient
           colors={['#60A7D2', '#4A90BF']}
           style={styles.navigation}
         >
           <View style={styles.navItems}>
-            <TouchableOpacity style={styles.navItem}>
+            <TouchableOpacity 
+              style={styles.navItem}
+              onPress={() => navigation.navigate('Tracker')}
+            >
               <Ionicons name="stats-chart" size={20} color="#FFFFFF" />
               <Text style={styles.navText}>Stats</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.navItem}>
+            <TouchableOpacity 
+              style={styles.navItem}
+              onPress={() => navigation.navigate('Map')}
+            >
               <Ionicons name="map" size={20} color="#FFFFFF" />
               <Text style={styles.navText}>Map</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.navItem}>
+            <TouchableOpacity 
+              style={styles.navItem}
+              onPress={() => navigation.navigate('Locations')}
+            >
               <Ionicons name="location" size={20} color="#FFFFFF" />
               <Text style={styles.navText}>Locations</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.navItem}>
+            <TouchableOpacity 
+              style={styles.navItem}
+              onPress={() => navigation.navigate('Account')}
+            >
               <Ionicons name="person" size={20} color="#FFFFFF" />
               <Text style={styles.navText}>Account</Text>
             </TouchableOpacity>

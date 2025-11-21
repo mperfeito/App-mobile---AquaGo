@@ -7,14 +7,35 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
-  Image,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import MapView, { Marker, Region } from "react-native-maps";
 
 const { width, height } = Dimensions.get('window');
+
+// Define your navigation stack types
+type RootStackParamList = {
+  Splash: undefined;
+  OnBoarding1: undefined;
+  OnBoarding2: undefined;
+  OnBoarding3: undefined;
+  OnBoarding4: undefined;
+  Login: undefined;
+  SignUp: undefined;
+  Account: undefined;
+  Comments: undefined;
+  BottomSheet: undefined;
+  Locations: undefined;
+  Map: undefined;
+  Profile: undefined;
+  Tracker: undefined;
+};
+
+// Create navigation prop type
+type MapScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 // Tipos TypeScript
 type WaterPointType = 'fountain' | 'refill_station' | 'public_building' | 'transport' | 'sports';
@@ -79,6 +100,7 @@ const waterPoints: WaterPoint[] = [
 ];
 
 export default () => {
+  const navigation = useNavigation<MapScreenNavigationProp>();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLocation, setSelectedLocation] = useState<WaterPoint | null>(null);
 
@@ -117,9 +139,6 @@ export default () => {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-  
-
       {/* Search Bar */}
       <View style={styles.searchContainer}>
         <View style={styles.searchBar}>
@@ -208,32 +227,44 @@ export default () => {
       </View>
 
       {/* Navigation Menu */}
-         <LinearGradient
-               colors={['#60A7D2', '#4A90BF']}
-               style={styles.navigation}
-             >
-               <View style={styles.navItems}>
-                 <TouchableOpacity style={styles.navItem}>
-                   <Ionicons name="stats-chart" size={20} color="#FFFFFF" />
-                   <Text style={styles.navText}>Stats</Text>
-                 </TouchableOpacity>
-     
-                 <TouchableOpacity style={styles.navItem}>
-                   <Ionicons name="map" size={20} color="#FFFFFF" />
-                   <Text style={styles.navText}>Map</Text>
-                 </TouchableOpacity>
-     
-                 <TouchableOpacity style={styles.navItem}>
-                   <Ionicons name="location" size={20} color="#FFFFFF" />
-                   <Text style={styles.navText}>Locations</Text>
-                 </TouchableOpacity>
-     
-                 <TouchableOpacity style={styles.navItem}>
-                   <Ionicons name="person" size={20} color="#FFFFFF" />
-                   <Text style={styles.navText}>Account</Text>
-                 </TouchableOpacity>
-               </View>
-             </LinearGradient>
+      <LinearGradient
+        colors={['#60A7D2', '#4A90BF']}
+        style={styles.navigation}
+      >
+        <View style={styles.navItems}>
+          <TouchableOpacity 
+            style={styles.navItem}
+            onPress={() => navigation.navigate('Tracker')}
+          >
+            <Ionicons name="stats-chart" size={20} color="#FFFFFF" />
+            <Text style={styles.navText}>Stats</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.navItem} 
+            onPress={() => navigation.navigate('Map')}
+          >
+            <Ionicons name="map" size={20} color="#FFFFFF" />
+            <Text style={styles.navText}>Map</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.navItem}
+            onPress={() => navigation.navigate('Locations')}
+          >
+            <Ionicons name="location" size={20} color="#FFFFFF" />
+            <Text style={styles.navText}>Locations</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.navItem} 
+            onPress={() => navigation.navigate('Account')}
+          >
+            <Ionicons name="person" size={20} color="#FFFFFF" />
+            <Text style={styles.navText}>Account</Text>
+          </TouchableOpacity>
+        </View>
+      </LinearGradient>
     </View>
   );
 };
@@ -243,9 +274,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#FFFFFF",
   },
-  
   searchContainer: {
-	marginTop:40,
+    marginTop: 40,
     paddingHorizontal: 24,
     paddingVertical: 16,
     backgroundColor: "#FFFFFF",

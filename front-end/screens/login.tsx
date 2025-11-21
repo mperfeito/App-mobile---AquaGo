@@ -13,7 +13,7 @@ import {
 import Ionicons from "react-native-vector-icons/Ionicons"; 
 import { LinearGradient } from "expo-linear-gradient";
 
-export default () => {
+export default ({navigation }: any) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -25,6 +25,8 @@ export default () => {
       return;
     }
     alert(`Login successful!\nEmail: ${email}`);
+    navigation.navigate('Map');
+
   };
 
   const handleGoogleLogin = () => {
@@ -32,6 +34,8 @@ export default () => {
   };
 
   const handleCreateAccount = () => {
+    navigation.navigate('SignUp');
+
     alert("Navigate to sign up screen");
   };
 
@@ -76,7 +80,7 @@ export default () => {
           </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.tab, !isLoginActive && styles.activeTab]}
-            onPress={() => setIsLoginActive(false)}
+            onPress={() => navigation.navigate('SignUp')} 
           >
             <Text style={[styles.tabText, !isLoginActive && styles.activeTabText]}>
               Sign Up

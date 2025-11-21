@@ -17,7 +17,7 @@ type ActivityLevel = 'sedentary' | 'moderate' | 'active' | 'veryActive';
 type ClimateType = 'cold' | 'temperate' | 'hot' | 'veryHot';
 type Gender = 'male' | 'female';
 
-export default () => {
+export default ({ navigation }: any) => {
   const [weight, setWeight] = useState(70);
   const [age, setAge] = useState(25);
   const [gender, setGender] = useState<Gender>('male');
@@ -65,7 +65,8 @@ export default () => {
   const dailyGoal = calculateDailyGoal();
 
   const handleContinue = () => {
-    alert(`Daily water goal set to: ${dailyGoal} ml`);
+    console.log(`Daily water goal set to: ${dailyGoal} ml`);
+    navigation.navigate('Login');
   };
 
   // Funções para ajustar valores

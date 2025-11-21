@@ -5,13 +5,13 @@ import { LinearGradient } from "expo-linear-gradient";
 
 const { width, height } = Dimensions.get('window');
 
-export default () => {
+export default ({ navigation }: any) => {
   const handleContinue = () => {
-    alert("Continue to next screen!");
+    navigation.navigate('OnBoarding2');
   };
 
   const handleSkip = () => {
-    alert("Skip onboarding!");
+    navigation.navigate('Login');
   };
 
   return (

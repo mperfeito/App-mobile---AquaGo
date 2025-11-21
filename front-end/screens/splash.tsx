@@ -3,10 +3,11 @@ import { View, Image, Text, StyleSheet, Animated, StatusBar } from "react-native
 import { LinearGradient } from "expo-linear-gradient";
 
 interface SplashScreenProps {
+  navigation?: any;
   onAnimationComplete?: () => void;
 }
 
-export default function SplashScreen({ onAnimationComplete }: SplashScreenProps) {
+export default function SplashScreen({ navigation, onAnimationComplete }: SplashScreenProps) {
   const fadeAnim = new Animated.Value(0);
   const scaleAnim = new Animated.Value(0.8);
   const slideAnim = new Animated.Value(50);
@@ -32,7 +33,7 @@ export default function SplashScreen({ onAnimationComplete }: SplashScreenProps)
           useNativeDriver: true,
         }),
       ]),
-      // Manter visível por mais tempo (aumentado de 1500 para 2500ms)
+      // Manter visível por mais tempo
       Animated.delay(2500),
       // Fade out
       Animated.timing(fadeAnim, {
@@ -41,12 +42,17 @@ export default function SplashScreen({ onAnimationComplete }: SplashScreenProps)
         useNativeDriver: true,
       }),
     ]).start(() => {
-      // Callback quando a animação terminar
+      // Navegar para o primeiro onboarding
+      if (navigation) {
+        navigation.navigate('OnBoarding1');
+      }
+      
+      // Callback original (se existir)
       if (onAnimationComplete) {
         onAnimationComplete();
       }
     });
-  }, []);
+  }, [navigation, fadeAnim, scaleAnim, slideAnim]);
 
   return (
     <View style={styles.container}>
@@ -96,6 +102,7 @@ export default function SplashScreen({ onAnimationComplete }: SplashScreenProps)
   );
 }
 
+// Mantenha os estilos existentes...
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -111,7 +118,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 40,
-    marginTop: StatusBar.currentHeight, // Compensa a status bar translucent
+    marginTop: StatusBar.currentHeight,
   },
   logoContainer: {
     alignItems: "center",
