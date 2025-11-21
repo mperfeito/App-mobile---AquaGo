@@ -1,0 +1,47 @@
+{
+    "users": [
+      {
+        "name": "Joana Silva",
+        "email": "joana@example.com",
+        "password": "password123",
+        "age": 28,
+        "gender": "female",
+        "activity_level": "active",
+        "climate_type": "moderate",
+        "height": 165
+      }
+    ],
+    "waterPoints": [
+      {
+        "name": "Fonte do Parque Central",
+        "type": "fountain",
+        "status": "active",
+        "coordinates": { "lat": 38.736946, "lng": -9.142685 },
+        "opening_hours": "24/7",
+        "last_maintenance_date": "2024-01-15"
+      }
+    ],
+    "favoritePoints": [],
+    "feedback": [
+      {
+        "user_id": null,
+        "point_id": null,
+        "rating": 5,
+        "comment": "Água muito fresca!"
+      }
+    ],
+    "waterIntake": [
+      {
+        "user_id": null,
+        "amount_ml": 250,
+        "timestamp": "2024-01-15T08:30:00Z"
+      }
+    ],
+    "waterGoals": [
+      {
+        "user_id": null,
+        "daily_goal_ml": 2000,
+        "active": true
+      }
+    ]
+}
