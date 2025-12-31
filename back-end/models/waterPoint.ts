@@ -8,7 +8,8 @@ const waterPointSchema = new Schema({
    opening_hours: {type: String, default: 24/7},
    last_maintenance_date: {type: Date}
 }, {
-    timestamps: {createdAt: 'created_at', updatedAt: 'updated_at'}
+    timestamps: {createdAt: 'created_at', updatedAt: 'updated_at'},
+    versionKey: false
 });
 
 const waterPoint = model('waterPoint', waterPointSchema);

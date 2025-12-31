@@ -6,7 +6,8 @@ const feedbackSchema = new Schema({
     rating: {type: Number, required: true, min: 1, max: 5},
     comment: {type: String, trim: true, maxLength: 500}
 }, {
-    timestamps: {createdAt: 'created_at'}
+    timestamps: {createdAt: 'created_at'},
+    versionKey: false
 });
 
 const feedback = model('feedback', feedbackSchema);

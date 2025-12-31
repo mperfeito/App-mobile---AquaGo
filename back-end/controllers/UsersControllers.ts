@@ -2,16 +2,16 @@ import {NextFunction, Request, Response} from 'express';
 import bcrypt from 'bcrypt';
 import User from '../models/usersModel';
 import ErrorHandler from '../middlewares/errorHandler';
-import jwt, {Secret, JwtPayload} from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 require('dotenv').config();
+
+interface AuthTokenPayload {
+    email: string;
+}
 
 export const registerUser = async (req : Request, res: Response) => {
     try{
-        const {name, email, password, age, gender, activity_level, climate_type, height} = req.body;
-
-        if(!name || !email || !password) {
-            throw new ErrorHandler(400, 'Please fill all the fields!')
-        }
+        const {name, email, password} = req.body;
         const existingUser = await User.findOne({ email });
         if (existingUser) {
             throw new ErrorHandler(400, 'Email already registered');
@@ -19,9 +19,14 @@ export const registerUser = async (req : Request, res: Response) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        const newUser = new User({name, email, password: hashedPassword, age, gender, activity_level, climate_type, height });
+        const newUser = new User({name, email, password: hashedPassword});
         await newUser.save();
-        return res.status(201).json({ message: 'User registered successfully', data : newUser});
+        const payload = {email: email};
+        const secretKey = process.env.TOKEN_SECRET_KEY as string;
+        const token = jwt.sign(payload, secretKey , {
+            expiresIn: '1h',
+        });
+        return res.status(201).json({ message: 'User registered successfully', token});
 
     } catch (err: any){
 
@@ -104,13 +109,49 @@ export const deleteUser = async (req: Request, res: Response, next: NextFunction
 }
 
 export const registerMissingInfo = async (req: Request, res: Response) => {
-    const {token} = req.body;
+    const {age, phone_number, gender, activity_level, climate_type, height, weight} = req.body
+    const authHeader = req.header('Authorization') as string;
+    const token = authHeader.replace('Bearer ', '');
+    const secretKey = process.env.TOKEN_SECRET_KEY as string;
+    const decoded = jwt.verify(token, secretKey) as AuthTokenPayload
     try{
-        const email = token.email;
+        const email = decoded.email;
         const TheUser = await User.findOne({email})
+        if(!TheUser){
+            throw new ErrorHandler(404, 'User not found!');
+        }
+        TheUser.age = age;
+        TheUser.phone_number = phone_number;
+        TheUser.gender = gender;
+        TheUser.activity_level = activity_level;
+        TheUser.climate_type = climate_type;
+        TheUser.height = height;
+        TheUser.weight = weight;
+        await TheUser.save()
+        res.status(201).json({message: "New infomations saved!!"});
         
     } catch(err: any){
         
+        if (err instanceof ErrorHandler) {
+        return res.status(err.statusCode).json({ message: err.message });
+        }
+        return res.status(500).json({message: 'Server Error!'});
+    }
+}
+
+export let getTheUserLoggedInInfo = async ( req: Request, res: Response, next: NextFunction) => {
+    const authHeader = req.header('Authorization') as string;
+    const token = authHeader.replace('Bearer ', '');
+    const secretKey = process.env.TOKEN_SECRET_KEY as string;
+    const decoded = jwt.verify(token, secretKey) as AuthTokenPayload
+    try{    
+        const email = decoded.email;
+        const TheUser = await User.findOne({email})
+        if(!TheUser){
+            throw new ErrorHandler(404, 'User not found!');
+        }
+        res.status(200).json({data: TheUser})
+    } catch(err: any){
         if (err instanceof ErrorHandler) {
         return res.status(err.statusCode).json({ message: err.message });
         }
