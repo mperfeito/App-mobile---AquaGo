@@ -5,7 +5,7 @@ import ErrorHandler from '../middlewares/errorHandler';
 
 export let registerWaterPoint = async (req: Request, res: Response, next: NextFunction) => {
     try{
-        const {name, type, status, coordinates, opening_hours, last_maintenance_date} = req.body;
+        const {name, type, status, coordinates, address, schedule, last_maintenance_date} = req.body;
 
         if(!name || !coordinates){
             throw new ErrorHandler(400, 'Please fill all the fields!');
@@ -14,9 +14,9 @@ export let registerWaterPoint = async (req: Request, res: Response, next: NextFu
         if(pointExist){
             throw new ErrorHandler(400, 'This water point already exists!');
         } 
-        const newPoint = new waterPoint({name, type, status, coordinates, opening_hours, last_maintenance_date});
+        const newPoint = new waterPoint({name, type, status, coordinates, address, schedule, last_maintenance_date});
         await newPoint.save();
-        return res.status(201).json({message: 'New water point registered sucessfuly', data: newPoint});
+        return res.status(201).json({message: 'New water point registered sucessfuly'});
 
     } catch(err: any){
 
@@ -56,6 +56,23 @@ export let listAllWaterPoints = async (req: Request, res: Response, next: NextFu
         return res.status(200).json({data: getAllWaterPoints})
     } catch(err: any){
 
+        if (err instanceof ErrorHandler) {
+        return res.status(err.statusCode).json({ message: err.message });
+        }
+
+        return res.status(500).json({message: 'Server error!'})
+    }
+}
+
+export let getTheLocation = async (req: Request, res: Response) => {
+    try{
+        const _id = req.params.id;
+        const pointExists = await waterPoint.findOne({_id})
+        if (!pointExists){
+            throw new ErrorHandler(404, 'The Water Point was not found!')
+        }
+        res.status(200).json({data: pointExists})
+    } catch(err: any){
         if (err instanceof ErrorHandler) {
         return res.status(err.statusCode).json({ message: err.message });
         }

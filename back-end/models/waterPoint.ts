@@ -5,7 +5,9 @@ const waterPointSchema = new Schema({
    type: {type: String, enum: ['fontain', 'tap', 'filter', 'bottle_refill']},
    status: {type: String, enum: ['active', 'maintenace', 'inactive']},
    coordinates: { lat: {type: Number, required: true}, lng: {type: Number, required: true}},
-   opening_hours: {type: String, default: 24/7},
+   address: {type: String},
+   rating: {type: Number, default: 3.0},
+   schedule: {opening_hour: {type: String, default: 8}, closing_hour: {type: String, default: 18}},
    last_maintenance_date: {type: Date}
 }, {
     timestamps: {createdAt: 'created_at', updatedAt: 'updated_at'},

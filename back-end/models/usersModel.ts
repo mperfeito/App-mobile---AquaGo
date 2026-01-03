@@ -7,10 +7,12 @@ const UsersSchema = new Schema({
     age: {type: Number},
     phone_number: {type: String},
     gender: {type: String, enum: ["male", "female"]},
-    activity_level: {type: String, enum: ["sedentary", "light", "moderate", "active", "very_active"]},
+    activity_level: {type: String, enum: ["sedentary", "moderate", "active", "very_active"]},
     climate_type: {type: String, enum: ["hot", "moderate", "cold"]},
     height: {type: Number},
     weight: {type: Number},
+    daily_water: {type: Number},
+    amount_intake: {type: Number, default: 0},
     }, {
         timestamps: {createdAt: 'created_at', updatedAt: 'updated_at'},
         versionKey: false
