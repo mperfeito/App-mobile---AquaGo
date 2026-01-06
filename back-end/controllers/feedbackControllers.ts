@@ -1,6 +1,11 @@
 import {Request, Response, NextFunction} from 'express';
 import Feedback from '../models/feedback';
 import ErrorHandler from '../middlewares/errorHandler';
+import jwt from 'jsonwebtoken';
+
+interface AuthTokenPayload {
+    email: string;
+}
 
 export const registerFeedback = async (req: Request, res: Response, next: NextFunction) => {
     const {rating, comment} = req.body;
@@ -68,4 +73,33 @@ export const feedbackByWaterPoints = async (req: Request, res: Response, next: N
         return res.status(err.statusCode || 500).json({ message: err.message || 'Server error!' });
 
     }
+}
+
+export const deleteComment = async (req: Request, res: Response) => {
+    const {point_id} = req.params;
+    const authHeader = req.header('Authorization') as string;
+    const token = authHeader.replace('Bearer ', '');
+    const secretKey = process.env.TOKEN_SECRET_KEY as string;
+    const decoded = jwt.verify(token, secretKey) as AuthTokenPayload
+    try{
+        const feedbackToDelete = await Feedback.findOne({
+            user_email : decoded.email,
+            point_id
+        })
+        if(!feedbackToDelete){
+            throw new ErrorHandler(404, `The comment was not found!`)
+        }
+        await Feedback.deleteOne({user_email: decoded.email, point_id});
+        res.status(201).json({message: `This comment from ${decoded.email} was deleted!`})
+        
+    } catch(err: any){
+
+         if (err instanceof ErrorHandler) {
+        return res.status(err.statusCode).json({ message: err.message });
+        }
+
+        return res.status(err.statusCode || 500).json({ message: err.message || 'Server error!' });
+
+    }
+
 }

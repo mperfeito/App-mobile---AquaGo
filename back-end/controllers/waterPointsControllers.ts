@@ -1,6 +1,7 @@
 import {Request, Response, NextFunction} from 'express';
 import waterPoint from '../models/waterPoint';
 import ErrorHandler from '../middlewares/errorHandler';
+import feedback from '../models/feedback';
 
 
 export let registerWaterPoint = async (req: Request, res: Response, next: NextFunction) => {
@@ -71,7 +72,22 @@ export let getTheLocation = async (req: Request, res: Response) => {
         if (!pointExists){
             throw new ErrorHandler(404, 'The Water Point was not found!')
         }
+        const getRatingsFromPoint = await feedback.find({point_id: _id})
+        if(!getRatingsFromPoint){
+            
+            res.status(200).json({data: pointExists})
+        }
+        console.log(pointExists, getRatingsFromPoint);
+        const div = getRatingsFromPoint.length + 1
+        let ratings = 0;
+        for(let i:number = 0; i< getRatingsFromPoint.length; i++){
+            ratings += getRatingsFromPoint[i].rating;
+        }
+        let finalRating = (ratings + pointExists.rating) / div;
+        const rounded = Number(finalRating.toFixed(1))
+        pointExists.rating = rounded;
         res.status(200).json({data: pointExists})
+
     } catch(err: any){
         if (err instanceof ErrorHandler) {
         return res.status(err.statusCode).json({ message: err.message });
