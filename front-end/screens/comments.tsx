@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   View, 
   ScrollView, 
@@ -13,7 +13,49 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
+import { useNavigation } from "@react-navigation/native";
+import {Alert} from 'react-native';
 import Ionicons from "react-native-vector-icons/Ionicons";
+import axios from 'axios';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import {jwtDecode} from "jwt-decode";
+
+
+type locationObj = {
+  id: string, 
+  name: string,
+  coordinates: {
+    lat: number,
+    lng: number,
+  },
+  address: string,
+  rating: number,
+  type: string,
+  schedule: {
+    opening_hour: number,
+    closing_hour: number,
+  },
+
+};
+
+type CommentObj = {
+  id: string,
+  user_email: string,
+  point_id: string,
+  rating: number[],
+  comment: string,
+  created_at: string,
+};
+
+type newCommentObj = {
+  rating: number,
+  comment: string,
+};
+
+type decode = {
+  email: string,
+}
+
 
 const { width, height } = Dimensions.get('window');
 
@@ -81,13 +123,99 @@ const AnimatedTransportCard = ({
 };
 
 export default () => {
+  const navigation = useNavigation();
   const [isFavorite, setIsFavorite] = useState(false);
-  const [selectedTransport, setSelectedTransport] = useState(null);
+  const [selectedTransport, setSelectedTransport] = useState<string>("null");
+  const [comments, setComments] = useState<CommentObj[]>([{
+    id:"692c6e409ead93fbb322f360",
+    user_email: "rodando@gmail.com",
+    point_id: "692c6c32b9dcd82c054b1e7a",
+    rating: [1,2,3],
+    comment: "Love this place!",
+    created_at: "2026-01-06T12:30:00.000Z"
+
+  }]);
+  const [commentToSave, setCommentToSave] = useState<newCommentObj>({rating: 0, comment: ""})
   const [comment, setComment] = useState("");
   const [rating, setRating] = useState(0);
   const [showComments, setShowComments] = useState(true);
+  const [theLocation, setTheLocation] = useState<locationObj>({
+    id: '69592e433e83bedc149ff86a',
+    name: 'Loading',
+    coordinates: {
+      lat: 41,
+      lng: -8.6,
+    },
+    address: 'Rua do carregamento',
+    rating: 3.0,
+    type: 'fountain',
+    schedule: {
+      opening_hour: 0,
+      closing_hour: 24
+    }
+  });
 
-  const handleTransportPress = (transport) => {
+  useEffect(() => {
+  try{
+    const getLocationInfo = async () => {
+      const locationID = await AsyncStorage.getItem("pointID") || '69592e433e83bedc149ff86a';
+      try{
+        const res = await axios.get(`http://10.0.2.2:3001/waterPoint/${locationID}`);
+        setTheLocation(res.data.data);
+      } catch(err){
+        console.error(err)
+      }
+    }
+    const getComments = async () => {
+      const locationID = await AsyncStorage.getItem("pointID") || '69592e433e83bedc149ff86a';
+      try{
+        const res = await axios.get(`http://10.0.2.2:3001/feedback/${locationID}`)
+        for(let i = 0; i < res.data.data.length; i++){
+          const myNumb = Math.floor(res.data.data[i].rating);
+          switch(myNumb){
+            case 1: 
+            res.data.data[i].rating = [1];
+            break;
+            case 2: 
+            res.data.data[i].rating = [1,2]
+            break;
+            case 3: 
+            res.data.data[i].rating = [1,2,3]
+            break;
+            case 4:
+            res.data.data[i].rating = [1,2,3,4]
+            break;
+            case 5:
+            res.data.data[i].rating = [1,2,3,4,5]
+            break;
+          }   
+        }
+        setComments(res.data.data);
+      } catch(err){
+        console.error(err);
+      }
+    }
+    getLocationInfo();
+    getComments();
+  } catch(err){
+    console.error(err)
+  }
+}, []);
+
+useEffect(() => {
+  console.log("Updated commentToSave:", commentToSave);
+}, [commentToSave]);
+
+  const calculateTime = async (date: string) => {
+    const now = new Date();
+    let dateD: Date = new Date(date)
+
+    const msPerDay = 1000 * 60 * 60 * 24;
+    const diffMs = now.getTime() - dateD.getTime();
+
+    return Math.floor(diffMs / msPerDay) + ' ' + "days ago";
+  }
+  const handleTransportPress = (transport: string) => {
     setSelectedTransport(transport);
     console.log(`Transport selected: ${transport}`);
   };
@@ -96,21 +224,58 @@ export default () => {
     alert("Open camera or photo library");
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (comment.trim() === "") {
       alert("Please add a comment before saving");
       return;
     }
-    alert(`Comment saved!\nRating: ${rating} stars\nComment: ${comment}`);
-    setComment("");
-    setRating(0);
+    console.log(comment)
+    const locationID = await AsyncStorage.getItem("pointID") || '69592e433e83bedc149ff86a';
+    const token = await AsyncStorage.getItem("authToken");
+    if(!token){
+      console.log("No token found");
+      return;
+    }
+    const decoded = jwtDecode<decode>(token);
+    setCommentToSave({
+      rating: rating,
+      comment: comment
+    })
+    console.log(commentToSave.comment, commentToSave.rating)
+    const res = await axios.post(`http://10.0.2.2:3001/feedback/${decoded.email}/${locationID}`, commentToSave, 
+      {headers: {Authorization: `Bearer ${token}`}}
+    )
+    .then(res => {
+      Alert.alert(
+        "Sucess",
+        `Your comment was sucessfully saved`,
+        [
+          {
+            text: "OK",
+            onPress: () => navigation.navigate('Comments'),
+          },
+        ]
+      );
+    })
+    .catch(err => {
+      Alert.alert(
+        "Error",
+        "An error ocurred while saving the comment!",
+        [
+          {
+            text: "TRY AGAIN",
+            onPress: () => navigation.navigate('Comment'),
+          },
+        ]
+      );
+    })
   };
 
   const handleClose = () => {
-    alert("Close button pressed - navigate back");
+    navigation.navigate("BottomSheet");
   };
 
-  const getTransportStyle = (transport) => {
+  const getTransportStyle = (transport: string) => {
     if (selectedTransport === transport) {
       return {
         borderColor: "#60A7D2",
@@ -119,26 +284,6 @@ export default () => {
       };
     }
     return {};
-  };
-
-  const renderStars = () => {
-    return (
-      <View style={styles.ratingContainer}>
-        {[1, 2, 3, 4, 5].map((star) => (
-          <TouchableOpacity
-            key={star}
-            onPress={() => setRating(star)}
-            style={styles.starButton}
-          >
-            <Ionicons
-              name={star <= rating ? "star" : "star-outline"}
-              size={24}
-              color={star <= rating ? "#FFD700" : "#CCCCCC"}
-            />
-          </TouchableOpacity>
-        ))}
-      </View>
-    );
   };
 
   return (
@@ -186,9 +331,9 @@ export default () => {
           {/* Location Header */}
           <View style={styles.locationHeader}>
             <View style={styles.locationInfo}>
-              <Text style={styles.locationTitle}>Crystal Fountain</Text>
+              <Text style={styles.locationTitle}>{theLocation.name}</Text>
               <View style={styles.subtitleContainer}>
-                <Text style={styles.locationSubtitle}>Public Fountain</Text>
+                <Text style={styles.locationSubtitle}>{theLocation.type}</Text>
                 <View style={styles.statusBadge}>
                   <Ionicons name="checkmark-circle" size={14} color="#27AE60" />
                   <Text style={styles.statusText}>Working</Text>
@@ -199,7 +344,7 @@ export default () => {
               <View style={styles.metaInfo}>
                 <View style={styles.metaItem}>
                   <Ionicons name="star" size={16} color="#FFD700" />
-                  <Text style={styles.metaText}>4.8</Text>
+                  <Text style={styles.metaText}>{theLocation.rating}</Text>
                 </View>
                 <View style={styles.metaItem}>
                   <Ionicons name="location" size={16} color="#60A7D2" />
@@ -337,7 +482,7 @@ export default () => {
           {/* Comments Section */}
           <View style={styles.commentsSection}>
             <View style={styles.commentsHeader}>
-              <Text style={styles.sectionTitle}>Comments (2)</Text>
+              <Text style={styles.sectionTitle}>Comments ({comments.length})</Text>
               <TouchableOpacity onPress={() => setShowComments(!showComments)}>
                 <Ionicons 
                   name={showComments ? "chevron-up" : "chevron-down"} 
@@ -349,7 +494,7 @@ export default () => {
 
             {showComments && (
               <>
-                {/* Comment 1 */}
+              {comments.map((comment) => (
                 <View style={styles.commentCard}>
                   <View style={styles.commentHeader}>
                     <View style={styles.commentUser}>
@@ -358,45 +503,21 @@ export default () => {
                         style={styles.avatar}
                       />
                       <View>
-                        <Text style={styles.userName}>Emily Johnson</Text>
+                        <Text style={styles.userName} key={comment.user_email}>{comment.user_email}</Text>
                         <View style={styles.commentRating}>
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <Ionicons key={star} name="star" size={12} color="#FFD700" />
+                          {comment.rating.map((comment) => (
+                            <Ionicons key={comment} name="star" size={12} color="#FFD700" />
                           ))}
                         </View>
                       </View>
                     </View>
-                    <Text style={styles.commentTime}>2 days ago</Text>
+                    <Text style={styles.commentTime} key={comment.created_at}>{calculateTime(comment.created_at)}</Text>
                   </View>
-                  <Text style={styles.commentText}>
-                    "Clean and refreshing water! The pressure is just right, and it's a perfect stop during my morning run."
+                  <Text style={styles.commentText} key={comment.comment}>
+                    {comment.comment}
                   </Text>
                 </View>
-
-                {/* Comment 2 */}
-                <View style={styles.commentCard}>
-                  <View style={styles.commentHeader}>
-                    <View style={styles.commentUser}>
-                      <Image
-                        source={{uri: "https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/a7876cc1-19d2-414c-bf9d-71a5914a9cb5"}}
-                        style={styles.avatar}
-                      />
-                      <View>
-                        <Text style={styles.userName}>Michael Reed</Text>
-                        <View style={styles.commentRating}>
-                          {[1, 2, 3, 4].map((star) => (
-                            <Ionicons key={star} name="star" size={12} color="#FFD700" />
-                          ))}
-                          <Ionicons name="star-outline" size={12} color="#FFD700" />
-                        </View>
-                      </View>
-                    </View>
-                    <Text style={styles.commentTime}>6 days ago</Text>
-                  </View>
-                  <Text style={styles.commentText}>
-                    "The water tastes good, but it could use a little shade nearby — it gets really hot during the afternoon."
-                  </Text>
-                </View>
+              ))}  
               </>
             )}
           </View>
@@ -405,7 +526,21 @@ export default () => {
           <View style={styles.addCommentSection}>
             <Text style={styles.sectionTitle}>Share Your Experience</Text>
             
-            {renderStars()}
+            <View style={styles.ratingContainer}>
+              {[1, 2, 3, 4, 5].map((star) => (
+              <TouchableOpacity
+                key={star}
+                onPress={() => setRating(star)}
+                style={styles.starButton}
+              >
+            <Ionicons
+              name={star <= rating ? "star" : "star-outline"}
+              size={24}
+              color={star <= rating ? "#FFD700" : "#CCCCCC"}
+            />
+          </TouchableOpacity>
+        ))}
+      </View>
             
             <TextInput
               style={styles.commentInput}

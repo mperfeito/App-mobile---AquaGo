@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   View, 
   ScrollView, 
@@ -14,6 +14,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import MapView, { Marker, Region } from "react-native-maps";
+import axios from 'axios';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const { width, height } = Dimensions.get('window');
 
@@ -25,8 +27,14 @@ type SavedLocation = {
   distance: string;
   rating: number;
   isFavorite: boolean;
-  latitude: number;
-  longitude: number;
+  coordinates: {
+    lat: number,
+    lng: number
+  },
+  schedule: {
+    opening_hour: number,
+    closing_hour: number
+  }
   lastVisited?: string;
 };
 
@@ -35,69 +43,38 @@ export default () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState('all');
   const [selectedLocation, setSelectedLocation] = useState<SavedLocation | null>(null);
+  const [locations, setLocations] = useState<SavedLocation[]>([]);
 
-  // Dados mock para locais guardados
-  const savedLocations: SavedLocation[] = [
-    {
-      id: '1',
-      name: 'Central Park Fountain',
-      type: 'fountain',
-      address: 'Central Park, New York',
-      distance: '0.2 km',
-      rating: 4.8,
-      isFavorite: true,
-      latitude: 40.7829,
-      longitude: -73.9654,
-      lastVisited: 'Today'
-    },
-    {
-      id: '2',
-      name: 'City Mall Refill Station',
-      type: 'refill_station',
-      address: '123 Mall Street',
-      distance: '0.5 km',
-      rating: 4.3,
-      isFavorite: true,
-      latitude: 40.7589,
-      longitude: -73.9851,
-      lastVisited: '2 days ago'
-    },
-    {
-      id: '3',
-      name: 'Public Library',
-      type: 'public_building',
-      address: '456 Library Ave',
-      distance: '0.8 km',
-      rating: 4.6,
-      isFavorite: false,
-      latitude: 40.7536,
-      longitude: -73.9822
-    },
-    {
-      id: '4',
-      name: 'Train Station',
-      type: 'transport',
-      address: '789 Station Road',
-      distance: '1.2 km',
-      rating: 4.0,
-      isFavorite: false,
-      latitude: 40.7505,
-      longitude: -73.9934,
-      lastVisited: '1 week ago'
-    },
-    {
-      id: '5',
-      name: 'Sports Center',
-      type: 'sports',
-      address: '321 Fitness St',
-      distance: '1.5 km',
-      rating: 4.7,
-      isFavorite: true,
-      latitude: 40.7685,
-      longitude: -73.9818,
-      lastVisited: '3 days ago'
+  useEffect( () => {
+    try{
+      let getAllTheLocations = async () => {
+        const res = await axios.get('http://10.0.2.2:3001/waterPoint');
+        let mappedLocations: SavedLocation[] = res.data.data.map((item: any) => ({
+        id: item.id || item._id,
+        name: item.name,
+        type: item.type ?? 'fountain',
+        address: item.address,
+        distance: item.distance ?? '5 km',
+        rating: item.rating ?? 3.5,
+        isFavorite: item.isFavorite ?? false,
+        coordinates: {
+          lat: item.coordinates.lat,
+          lng: item.coordinates.lng,
+        },
+        schedule: {
+          opening_hour: item.schedule.opening_hour,
+          closing_hour: item.schedule.closing_hour,
+        },
+        lastVisited: item.lastVisited
+      }));
+      setLocations(mappedLocations);
+      console.log(locations)
+      }
+      getAllTheLocations()
+    } catch(err){
+      console.error(err);
     }
-  ];
+  }, []);
 
   const filters = [
     { key: 'all', label: 'All', icon: 'apps' },
@@ -129,7 +106,7 @@ export default () => {
     return colors[type];
   };
 
-  const filteredLocations = savedLocations.filter(location => {
+  const filteredLocations = locations.filter(location => {
     const matchesSearch = location.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          location.address.toLowerCase().includes(searchQuery.toLowerCase());
     
@@ -149,16 +126,15 @@ export default () => {
     console.log('Get directions to:', location.name);
   };
 
-  const viewLocationDetails = (location: SavedLocation) => {
-    navigation.navigate('BottomSheet', { 
-      location: location // Passa o objeto completo do local
-    });
+  const viewLocationDetails = async (location: SavedLocation) => {
+    await AsyncStorage.setItem("pointID", location.id);
+    navigation.navigate('BottomSheet');
   };
   
 
   const initialRegion: Region = {
-    latitude: 40.7829,
-    longitude: -73.9654,
+    latitude: 41.1829,
+    longitude: -8.6654,
     latitudeDelta: 0.0922,
     longitudeDelta: 0.0421,
   };
@@ -248,8 +224,8 @@ export default () => {
               <Marker
                 key={location.id}
                 coordinate={{
-                  latitude: location.latitude,
-                  longitude: location.longitude,
+                  latitude: location.coordinates.lat,
+                  longitude: location.coordinates.lng,
                 }}
                 onPress={() => setSelectedLocation(location)}
               >

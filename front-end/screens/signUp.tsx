@@ -12,6 +12,9 @@ import {
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { LinearGradient } from "expo-linear-gradient";
+import {Alert} from 'react-native';
+import axios from 'axios';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default ({ navigation }: any ) => {
   const [name, setName] = useState("");
@@ -22,7 +25,7 @@ export default ({ navigation }: any ) => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSignUpActive, setIsSignUpActive] = useState(true);
 
-  const handleSignUp = () => {
+  const handleSignUp = async () => {
     if (!name || !email || !password || !confirmPassword) {
       alert("Please fill in all fields");
       return;
@@ -31,13 +34,35 @@ export default ({ navigation }: any ) => {
       alert("Passwords don't match");
       return;
     }
-    alert(`Account created successfully!\nName: ${name}\nEmail: ${email}`);
-    navigation.navigate("Map");
+    const payload = {
+      name: name,
+      email: email,
+      password: password
+    }
+    try{
+      const res = await axios.post('http://10.0.2.2:3001/user/register', payload);
+      await AsyncStorage.removeItem("authToken");
+      await AsyncStorage.setItem("authToken", res.data.token);
+      console.log(res.data.token);
+      Alert.alert(
+        "Success",
+        "Account created successfully!",
+        [
+        {
+            text: "OK",
+            onPress: () => navigation.navigate("Map")
+        },
+        ]
+      );
+    }
+    catch(err){
+      console.log("REGISTER ERROR: ", err);
+    };
   };
 
   const handleLoginRedirect = () => {
     alert("Navigate to login screen");
-    navigation.navigate("Login");
+    navigation.navigate("Map");
   };
 
   const passwordRequirements = [

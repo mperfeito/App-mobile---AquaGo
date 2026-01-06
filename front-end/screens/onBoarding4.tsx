@@ -72,7 +72,7 @@ export default ({ navigation }: any) => {
   // Funções para ajustar valores
   const adjustWeight = (increment: boolean) => {
     setWeight(prev => {
-      const newWeight = increment ? prev + 5 : prev - 5;
+      const newWeight = increment ? prev + 1 : prev - 1;
       return Math.max(40, Math.min(150, newWeight)); // Limite entre 40-150kg
     });
     setCustomGoal(0); // Reset custom goal quando ajustar outros parâmetros
@@ -80,7 +80,7 @@ export default ({ navigation }: any) => {
 
   const adjustAge = (increment: boolean) => {
     setAge(prev => {
-      const newAge = increment ? prev + 5 : prev - 5;
+      const newAge = increment ? prev + 1 : prev - 1;
       return Math.max(10, Math.min(100, newAge)); // Limite entre 10-100 anos
     });
     setCustomGoal(0);

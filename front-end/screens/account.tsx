@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   View,
   ScrollView,
@@ -15,6 +15,18 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation } from "@react-navigation/native"; 
 import Ionicons from "react-native-vector-icons/Ionicons";
 import Svg, { Path } from "react-native-svg";
+import axios from 'axios';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+// Definir tipos TypeScript
+type UserData = {
+  name: string;
+  weight: number;
+  height: number;
+  ammout_intake: number;
+  dailyWater: number;
+};
+
 
 const { width, height } = Dimensions.get("window");
 
@@ -84,8 +96,34 @@ const HydrationTracker: React.FC = () => {
   const [bubbleAnim2] = useState<Animated.Value>(new Animated.Value(0));
   const [bubbleAnim3] = useState<Animated.Value>(new Animated.Value(0));
 
+  const [userData, setUserData] = useState<UserData>({
+  name: "User123",
+  weight: 80,
+  height: 190,
+  ammout_intake: 0,
+  dailyWater: 2500,
+})
+
+useEffect( () => {
+  let getUserData = async () => {
+    const token = await AsyncStorage.getItem("authToken");
+    const res = await axios.get('http://10.0.2.2:3001/user/logged',{
+          headers: { Authorization: `Bearer ${token}` },
+    });
+    const {name,ammout_intake, height, weight, daily_water } = res.data.data
+    setUserData((prev) => ({
+      ...prev,
+      name: name,
+      height: height,
+      weight: weight ?? 70,
+      intake: ammout_intake,
+      dailyWater: daily_water ?? 2500,
+    }));
+  }
+    getUserData();
+}, []);
+
   const waterAmounts: number[] = [100, 250, 500, 750];
-  const dailyGoal: number = 2500;
 
   // Animação das bolhas
   const animateBubbles = (): void => {
@@ -113,8 +151,8 @@ const HydrationTracker: React.FC = () => {
   };
 
   const calculateWaterLevel = (amount: number): void => {
-    const newTotal = Math.min(currentHydration + amount, dailyGoal);
-    const newPercentage = Math.min(newTotal / dailyGoal, 1);
+    const newTotal = Math.min(userData.ammout_intake + amount, userData.dailyWater);
+    const newPercentage = Math.min(newTotal / userData.dailyWater, 1);
 
     // Animação do nível da água
     Animated.spring(waterLevel, {
@@ -207,7 +245,7 @@ const HydrationTracker: React.FC = () => {
             </TouchableOpacity>
               <View>
                 <Text style={styles.greeting}>Hello,</Text>
-                <Text style={styles.username}>user123</Text>
+                <Text style={styles.username}>{userData.name}</Text>
               </View>
             </View>
             <TouchableOpacity style={styles.settingsButton}>
@@ -225,11 +263,11 @@ const HydrationTracker: React.FC = () => {
             <View style={styles.goalContent}>
               <View>
                 <Text style={styles.goalLabel}>Daily Goal</Text>
-                <Text style={styles.goalAmount}>{dailyGoal} ml</Text>
+                <Text style={styles.goalAmount}>{userData.dailyWater} ml</Text>
               </View>
               <View style={styles.goalProgress}>
                 <Text style={styles.goalPercentage}>
-                  {Math.round((currentHydration / dailyGoal) * 100)}%
+                  {Math.round((userData.ammout_intake / userData.dailyWater) * 100)}%
                 </Text>
                 <Text style={styles.goalSubtext}>Completed</Text>
               </View>
@@ -257,8 +295,8 @@ const HydrationTracker: React.FC = () => {
         <View style={styles.waterSection}>
           <WaterDrop 
             waterLevel={waterLevel} 
-            currentHydration={currentHydration}
-            dailyGoal={dailyGoal}
+            currentHydration={userData.ammout_intake}
+            dailyGoal={userData.dailyWater}
           />
         </View>
 
@@ -298,14 +336,14 @@ const HydrationTracker: React.FC = () => {
         <View style={styles.statsGrid}>
           <View style={styles.statCard}>
             <Ionicons name="water-outline" size={24} color="#60A7D2" />
-            <Text style={styles.statValue}>{currentHydration}ml</Text>
+            <Text style={styles.statValue}>{userData.ammout_intake}ml</Text>
             <Text style={styles.statLabel}>Today</Text>
           </View>
           
           <View style={styles.statCard}>
             <Ionicons name="trophy-outline" size={24} color="#60A7D2" />
             <Text style={styles.statValue}>
-              {Math.round((currentHydration / dailyGoal) * 100)}%
+              {Math.round((userData.ammout_intake / userData.dailyWater) * 100)}%
             </Text>
             <Text style={styles.statLabel}>Progress</Text>
           </View>
@@ -313,7 +351,7 @@ const HydrationTracker: React.FC = () => {
           <View style={styles.statCard}>
             <Ionicons name="time-outline" size={24} color="#60A7D2" />
             <Text style={styles.statValue}>
-              {Math.ceil((dailyGoal - currentHydration) / 250)}
+              {Math.ceil((userData.dailyWater - userData.ammout_intake) / 250)}
             </Text>
             <Text style={styles.statLabel}>Cups Left</Text>
           </View>

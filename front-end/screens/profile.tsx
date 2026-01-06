@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, {useEffect, useState } from "react";
 import { 
   View, 
   ScrollView, 
@@ -14,6 +14,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import Ionicons from "react-native-vector-icons/Ionicons";  
 import { useNavigation } from "@react-navigation/native";
+import axios from 'axios';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Definir tipos TypeScript
 type UserData = {
@@ -22,6 +24,7 @@ type UserData = {
   phoneNumber: string;
   dailyWaterGoal: number;
   weight: number;
+  height: number;
   activityLevel: string;
   climateType: string;
   notifications: boolean;
@@ -40,10 +43,34 @@ export default () => {
     phoneNumber: "+1 234 567 8900",
     dailyWaterGoal: 2500,
     weight: 70,
+    height: 170,
     activityLevel: "moderate",
     climateType: "temperate",
     notifications: true,
   });
+
+  useEffect( () => {
+    let getUserData = async () => {
+      const token = await AsyncStorage.getItem("authToken");
+      const res = await axios.get('http://10.0.2.2:3001/user/logged',{
+            headers: { Authorization: `Bearer ${token}` },
+      });
+      const {name, email, phone_number, activity_level, climate_type, height, weight, daily_water } = res.data.data
+      setUserData((prev) => ({
+          ...prev,
+          fullName: name,
+          email: email,
+          phoneNumber: phone_number,
+          activityLevel: activity_level ?? 'sedentary',
+          climateType: climate_type ?? 'cold',
+          height: height,
+          weight: weight ?? 70,
+          dailyWaterGoal: daily_water ?? 2500,
+        }));
+    }
+    getUserData();
+  }, []);
+
 
   const [isEditing, setIsEditing] = useState(false);
   const [password, setPassword] = useState("");
@@ -62,9 +89,35 @@ export default () => {
     { value: "veryHot", label: "Very Hot", icon: "flame-outline" }
   ];
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (isEditing) {
-      Alert.alert("Success", "Profile updated successfully!");
+      const token = await AsyncStorage.getItem("authToken");
+      const payload = {
+        name: userData.fullName,
+        email: userData.email,
+        phone_number: userData.phoneNumber,
+        password: password,
+        weight: userData.weight,
+        climate_type: userData.climateType,
+        activity_level: userData.activityLevel,
+        daily_water: userData.dailyWaterGoal
+      }
+      const res = await axios.patch('http://10.0.2.2:3001/user',
+          payload,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-type': 'application/json'
+            }
+          } 
+      )
+      .then(res => {
+        console.log(res)
+        Alert.alert("Success", "Profile updated successfully!");
+      })
+      .catch(err=> 
+        console.error(err.message)
+      )
       setIsEditing(false);
     } else {
       setIsEditing(true);

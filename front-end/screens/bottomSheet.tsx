@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   View, 
   ScrollView, 
@@ -10,7 +10,26 @@ import {
 } from "react-native";
 
 import { LinearGradient } from "expo-linear-gradient";
+import { useNavigation } from "@react-navigation/native";
 import Ionicons from "react-native-vector-icons/Ionicons";
+import axios from 'axios';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+type locationObj = {
+  id: string, 
+  name: string,
+  coordinates: {
+    lat: number,
+    lng: number,
+  },
+  address: string,
+  rating: number,
+  schedule: {
+    opening_hour: number,
+    closing_hour: number,
+  },
+
+}
 
 const { width, height } = Dimensions.get('window');
 
@@ -78,15 +97,47 @@ const AnimatedTransportCard = ({
 };
 
 export default () => {
+  const navigation = useNavigation();
   const [isFavorite, setIsFavorite] = useState(false);
   const [selectedTransport, setSelectedTransport] = useState(null);
+  const [theLocation, setTheLocation] = useState<locationObj>({
+  id: '69592e433e83bedc149ff86a',
+  name: 'Loading',
+  coordinates: {
+    lat: 41,
+    lng: -8.6,
+  },
+  address: 'Rua do carregamento',
+  rating: 3.0,
+  schedule: {
+    opening_hour: 0,
+    closing_hour: 24
+  }
+});
+
+useEffect(() => {
+  try{
+    const getLocationInfo = async () => {
+      const locationID = await AsyncStorage.getItem("pointID") || '69592e433e83bedc149ff86a';
+      try{
+        const res = await axios.get(`http://10.0.2.2:3001/waterPoint/${locationID}`)
+        console.log(res.data.data)
+        setTheLocation(res.data.data);
+      } catch(err){
+        console.error(err)
+      }
+    }
+    getLocationInfo()
+  } catch(err){
+    console.error(err)
+  }
+}, [])
 
   const handleTransportPress = (transport) => {
     setSelectedTransport(transport);
     // Aqui você pode adicionar a lógica de navegação
     console.log(`Transport selected: ${transport}`);
   };
-
   const getTransportStyle = (transport) => {
     if (selectedTransport === transport) {
       return {
@@ -97,6 +148,7 @@ export default () => {
     }
     return {};
   };
+
 
   return (
     <View style={styles.container}>
@@ -134,7 +186,7 @@ export default () => {
           <View style={styles.mainContent}>
             {/* Título e informações */}
             <View style={styles.titleSection}>
-              <Text style={styles.title}>Crystal Fountain</Text>
+              <Text style={styles.title}>{theLocation.name}</Text>
               <View style={styles.subtitleContainer}>
                 <Text style={styles.subtitle}>Public Fountain</Text>
                 <View style={styles.statusBadge}>
@@ -147,7 +199,7 @@ export default () => {
               <View style={styles.metaInfo}>
                 <View style={styles.metaItem}>
                   <Ionicons name="star" size={16} color="#FFD700" />
-                  <Text style={styles.metaText}>4.8</Text>
+                  <Text style={styles.metaText}>{theLocation.rating}</Text>
                 </View>
                 <View style={styles.metaItem}>
                   <Ionicons name="location" size={16} color="#60A7D2" />
@@ -241,7 +293,7 @@ export default () => {
                     <Ionicons name="location-outline" size={20} color="#FFFFFF" />
                   </View>
                   <View style={styles.detailTextContainer}>
-                    <Text style={styles.detailLabel}>Address</Text>
+                    <Text style={styles.detailLabel}>{theLocation.address}</Text>
                     <Text style={styles.detailValue}>123 Green Park Avenue</Text>
                   </View>
                 </View>
@@ -251,7 +303,7 @@ export default () => {
                     <Ionicons name="time-outline" size={20} color="#FFFFFF" />
                   </View>
                   <View style={styles.detailTextContainer}>
-                    <Text style={styles.detailLabel}>Opening Hours</Text>
+                    <Text style={styles.detailLabel}>{theLocation.schedule.opening_hour}h - {theLocation.schedule.closing_hour}h</Text>
                     <Text style={styles.detailValue}>Always open</Text>
                   </View>
                 </View>
@@ -274,7 +326,7 @@ export default () => {
             <View style={styles.actionSection}>
               <TouchableOpacity 
                 style={styles.feedbackButton}
-                onPress={() => alert('View Feedbacks')}
+                onPress={() => navigation.navigate('Comments')}
               >
                 <View style={styles.feedbackButtonContent}>
                   <Ionicons name="chatbubble-ellipses-outline" size={22} color="#60A7D2" />

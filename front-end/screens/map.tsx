@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   ScrollView,
@@ -13,6 +13,7 @@ import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import MapView, { Marker, Region } from "react-native-maps";
+import axios from 'axios';
 
 const { width, height } = Dimensions.get('window');
 
@@ -43,66 +44,51 @@ type WaterPointType = 'fountain' | 'refill_station' | 'public_building' | 'trans
 interface WaterPoint {
   id: number;
   name: string;
-  latitude: number;
-  longitude: number;
+  coordinates: {
+    lat: number,
+    lng: number
+  }
   type: WaterPointType;
   rating: number;
+  schedule: {
+    opening_hour: number;
+    closing_hour: number;
+  };
   distance: string;
-}
-
-// Dados mock para pontos de água
-const waterPoints: WaterPoint[] = [
-  {
-    id: 1,
-    name: "Central Park Fountain",
-    latitude: 40.7829,
-    longitude: -73.9654,
-    type: "fountain",
-    rating: 4.5,
-    distance: "0.2 km"
-  },
-  {
-    id: 2,
-    name: "City Mall Refill",
-    latitude: 40.7589,
-    longitude: -73.9851,
-    type: "refill_station",
-    rating: 4.2,
-    distance: "0.5 km"
-  },
-  {
-    id: 3,
-    name: "Public Library",
-    latitude: 40.7536,
-    longitude: -73.9822,
-    type: "public_building",
-    rating: 4.7,
-    distance: "0.8 km"
-  },
-  {
-    id: 4,
-    name: "Train Station",
-    latitude: 40.7505,
-    longitude: -73.9934,
-    type: "transport",
-    rating: 4.0,
-    distance: "1.2 km"
-  },
-  {
-    id: 5,
-    name: "Sports Center",
-    latitude: 40.7685,
-    longitude: -73.9818,
-    type: "sports",
-    rating: 4.3,
-    distance: "1.5 km"
-  }
-];
+} 
 
 export default () => {
   const navigation = useNavigation<MapScreenNavigationProp>();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLocation, setSelectedLocation] = useState<WaterPoint | null>(null);
+  const [waterPoints, setwaterPoins] = useState<WaterPoint[]>([]);  
+
+useEffect(() => {
+  try{
+    const getLocations = async () => {
+      const res = await axios.get('http://10.0.2.2:3001/waterPoint')
+      let mappedWaterPoints: WaterPoint[] = res.data.data.map((item:any) => ({
+        id: item.id || item._id,
+        name: item.name,
+        coordinates: {
+          lat: item.coordinates.lat,
+          lng: item.coordinates.lng,
+        },
+        type: item.type || "fountain",
+        rating: item.rating,
+        schedule: {
+          opening_hour: item.schedule.opening_hour,
+          closing_hour: item.schedule.closing_hour,
+        }
+      }))
+      setwaterPoins(mappedWaterPoints);
+      console.log(waterPoints)
+    }
+    getLocations();
+  } catch(err){
+    console.error(err);
+  }
+}, []);
 
   const filteredLocations = waterPoints.filter(point =>
     point.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -131,8 +117,8 @@ export default () => {
   };
 
   const initialRegion: Region = {
-    latitude: 40.7829,
-    longitude: -73.9654,
+    latitude: 41.1829,
+    longitude: -8.6654,
     latitudeDelta: 0.0922,
     longitudeDelta: 0.0421,
   };
@@ -168,8 +154,8 @@ export default () => {
             <Marker
               key={point.id}
               coordinate={{
-                latitude: point.latitude,
-                longitude: point.longitude,
+                latitude: point.coordinates.lat,
+                longitude: point.coordinates.lng,
               }}
               onPress={() => setSelectedLocation(point)}
             >
