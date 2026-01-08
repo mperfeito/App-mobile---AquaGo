@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   View, 
   ScrollView, 
@@ -14,6 +14,8 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { LineChart, BarChart } from "react-native-chart-kit";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from 'axios';
 
 const { width, height } = Dimensions.get('window');
 const CHART_WIDTH = width - 64;
@@ -37,8 +39,14 @@ type RootStackParamList = {
   Tracker: undefined;
 };
 
+type userDataObj = {
+  amount_intake: number;
+  daily_water: number; 
+}
+
 // Create navigation prop type
 type TrackerScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
 
 // Definir tipos para as props
 interface AnimatedStatCardProps {
@@ -114,6 +122,31 @@ const StatsScreen: React.FC = () => {
   const navigation = useNavigation<TrackerScreenNavigationProp>();
   const [activeTab, setActiveTab] = useState<'daily' | 'weekly' | 'monthly'>('daily');
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [userData, setUserData] = useState<userDataObj>({
+    amount_intake: 2300,
+    daily_water: 2500
+  });
+  const progressPercentage = Math.round(userData.amount_intake / userData.daily_water * 100);
+
+useEffect(() => {
+    const loadInfo = async () => {
+      const token = await AsyncStorage.getItem("authToken");
+      await axios.get('http://10.0.2.2:3001/user/logged',{
+        headers: {
+          Authorization: `Bearer ${token}`,
+        }}
+      )
+      .then(res => {
+        const {amount_intake, daily_water} = res.data.data
+        setUserData((prev) => ({
+          ...prev,
+          amount_intake: amount_intake,
+          daily_water: daily_water
+        }))
+      })
+    }
+    loadInfo();
+  }, []);
 
   // Dados mock para gráficos
   const dailyData = {
@@ -258,7 +291,7 @@ const StatsScreen: React.FC = () => {
           >
             <Ionicons name="water-outline" size={20} color="#FFFFFF" />
           </LinearGradient>
-          <Text style={styles.statValue}>2,450 ml</Text>
+          <Text style={styles.statValue}>{userData.amount_intake}</Text>
           <Text style={styles.statLabel}>Consumo Hoje</Text>
         </View>
       </AnimatedStatCard>
@@ -361,12 +394,12 @@ const StatsScreen: React.FC = () => {
           <View style={styles.goalItem}>
             <View style={styles.goalInfo}>
               <Text style={styles.goalTitle}>Meta Diária</Text>
-              <Text style={styles.goalValue}>2,500 ml</Text>
+              <Text style={styles.goalValue}>{userData.daily_water}</Text>
             </View>
             <View style={styles.progressContainer}>
-              <View style={[styles.progressBar, { width: '98%' }]} />
+              <View style={[styles.progressBar, { width: `${progressPercentage}%` }]} />
             </View>
-            <Text style={styles.goalPercentage}>98%</Text>
+            <Text style={styles.goalPercentage}>{progressPercentage}%</Text>
           </View>
 
           <View style={styles.goalItem}>

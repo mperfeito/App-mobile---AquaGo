@@ -35,16 +35,7 @@ export default ({navigation }: any) => {
       const res = await axios.post('http://10.0.2.2:3001/user/login', payload);
       await AsyncStorage.removeItem("authToken");
       await AsyncStorage.setItem("authToken", res.data.token);
-      Alert.alert(
-        "Success",
-        "Account logged in successfully!",
-        [
-        {
-            text: "OK",
-            onPress: () => navigation.navigate('Map'),
-          },
-        ]
-      );
+      navigation.navigate('Map');
     }
     catch(err){
       console.log("LOGIN ERROR: ", err);

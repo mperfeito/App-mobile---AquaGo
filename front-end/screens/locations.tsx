@@ -22,7 +22,7 @@ const { width, height } = Dimensions.get('window');
 type SavedLocation = {
   id: string;
   name: string;
-  type: 'fountain' | 'refill_station' | 'public_building' | 'transport' | 'sports';
+  type: 'fountain' | 'refill_station' | 'public_building' | 'transport' | 'tap';
   address: string;
   distance: string;
   rating: number;
@@ -68,7 +68,6 @@ export default () => {
         lastVisited: item.lastVisited
       }));
       setLocations(mappedLocations);
-      console.log(locations)
       }
       getAllTheLocations()
     } catch(err){
@@ -90,7 +89,7 @@ export default () => {
       refill_station: 'refresh',
       public_building: 'business',
       transport: 'train',
-      sports: 'fitness'
+      tap: 'fitness'
     };
     return icons[type];
   };
@@ -101,7 +100,7 @@ export default () => {
       refill_station: "#4A90BF",
       public_building: "#357ABD",
       transport: "#2C3E50",
-      sports: "#27AE60"
+      tap: "#27AE60"
     };
     return colors[type];
   };
@@ -392,7 +391,7 @@ export default () => {
               onPress={() => navigation.navigate('Account')} 
             >
               <Ionicons name="person" size={20} color="#FFFFFF" />
-              <Text style={styles.navText}>Profile</Text>
+              <Text style={styles.navText}>Account</Text>
             </TouchableOpacity>
           </View>
         </LinearGradient>

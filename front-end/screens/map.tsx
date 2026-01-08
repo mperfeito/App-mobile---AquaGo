@@ -8,12 +8,15 @@ import {
   StyleSheet,
   Dimensions,
 } from "react-native";
+import * as Location from 'expo-location';
 import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import {Alert} from 'react-native';
 import Ionicons from "react-native-vector-icons/Ionicons";
 import MapView, { Marker, Region } from "react-native-maps";
 import axios from 'axios';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const { width, height } = Dimensions.get('window');
 
@@ -39,7 +42,7 @@ type RootStackParamList = {
 type MapScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 // Tipos TypeScript
-type WaterPointType = 'fountain' | 'refill_station' | 'public_building' | 'transport' | 'sports';
+type WaterPointType = 'fountain' | 'refill_station' | 'public_building' | 'transport' | 'tap';
 
 interface WaterPoint {
   id: number;
@@ -56,12 +59,29 @@ interface WaterPoint {
   };
   distance: string;
 } 
+type LocationType = Location.LocationObject | null;
 
 export default () => {
   const navigation = useNavigation<MapScreenNavigationProp>();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLocation, setSelectedLocation] = useState<WaterPoint | null>(null);
-  const [waterPoints, setwaterPoins] = useState<WaterPoint[]>([]);  
+  const [waterPoints, setwaterPoins] = useState<WaterPoint[]>([]);
+  const [locationUser, setLocationUser] = useState<LocationType>(null);
+
+  const getLocation = async () => {
+    // Request permission
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      console.log('Permission to access location was denied');
+      return;
+    }
+
+    // Get current position
+    const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+    setLocationUser(loc);
+  };
+
+  
 
 useEffect(() => {
   try{
@@ -82,8 +102,23 @@ useEffect(() => {
         }
       }))
       setwaterPoins(mappedWaterPoints);
-      console.log(waterPoints)
     }
+    const requestLocation = async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission to access location was denied');
+        return;
+      }
+
+      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+      setLocationUser(loc);
+      if(!locationUser){
+        return console.log('No coordinates')
+      }
+      console.log(locationUser.coords.latitude, locationUser.coords.longitude);
+    };
+
+    requestLocation();
     getLocations();
   } catch(err){
     console.error(err);
@@ -100,7 +135,7 @@ useEffect(() => {
       refill_station: "#4A90BF",
       public_building: "#357ABD",
       transport: "#2C3E50",
-      sports: "#27AE60"
+      tap: "#27AE60"
     };
     return colors[type];
   };
@@ -111,7 +146,7 @@ useEffect(() => {
       refill_station: "refresh",
       public_building: "business",
       transport: "train",
-      sports: "fitness"
+      tap: "fitness"
     };
     return icons[type];
   };
@@ -119,9 +154,24 @@ useEffect(() => {
   const initialRegion: Region = {
     latitude: 41.1829,
     longitude: -8.6654,
-    latitudeDelta: 0.0922,
-    longitudeDelta: 0.0421,
+    latitudeDelta: 0.01,
+    longitudeDelta: 0.01,
   };
+
+  const viewLocationDetails = async (point: any) => {
+    setSelectedLocation(point)
+    await AsyncStorage.setItem("pointID", point.id);
+    navigation.navigate('BottomSheet');
+  };
+
+  if (!locationUser) {
+    return (
+      <View style={styles.container}>
+        <Text>Fetching location...</Text>
+      </View>
+    );
+  }
+
 
   return (
     <View style={styles.container}>
@@ -148,7 +198,17 @@ useEffect(() => {
       <View style={styles.mapContainer}>
         <MapView
           style={styles.map}
-          initialRegion={initialRegion}
+          region={
+          locationUser
+          ? {
+            latitude: locationUser.coords.latitude,
+            longitude: locationUser.coords.longitude,
+            latitudeDelta: 0.0922,
+            longitudeDelta: 0.0421,
+          }
+          : initialRegion
+       }
+          showsUserLocation={true}
         >
           {filteredLocations.map((point) => (
             <Marker
@@ -157,13 +217,20 @@ useEffect(() => {
                 latitude: point.coordinates.lat,
                 longitude: point.coordinates.lng,
               }}
-              onPress={() => setSelectedLocation(point)}
+              onPress={() => viewLocationDetails(point)}
             >
               <View style={[styles.marker, { backgroundColor: getPinColor(point.type) }]}>
                 <Ionicons name={getPinIcon(point.type) as any} size={16} color="#FFFFFF" />
               </View>
             </Marker>
           ))}
+          <Marker
+            coordinate={{
+              latitude: locationUser.coords.latitude,
+              longitude: locationUser.coords.longitude,
+            }}
+            title="You are here"
+          />
         </MapView>
 
         {/* Selected Location Card */}

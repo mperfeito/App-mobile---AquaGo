@@ -108,39 +108,6 @@ export const deleteUser = async (req: Request, res: Response, next: NextFunction
     }
 }
 
-export const registerMissingInfo = async (req: Request, res: Response) => {
-    const {age, phone_number, gender, activity_level, climate_type, height, weight} = req.body
-    const authHeader = req.header('Authorization') as string;
-    const token = authHeader.replace('Bearer ', '');
-    const secretKey = process.env.TOKEN_SECRET_KEY as string;
-    const decoded = jwt.verify(token, secretKey) as AuthTokenPayload
-    try{
-        const email = decoded.email;
-        const TheUser = await User.findOne({email})
-        if(!TheUser){
-            throw new ErrorHandler(404, 'User not found!');
-        }
-        const dailyWater = 35 * weight;
-        TheUser.age = age;
-        TheUser.phone_number = phone_number;
-        TheUser.gender = gender;
-        TheUser.activity_level = activity_level;
-        TheUser.climate_type = climate_type;
-        TheUser.height = height;
-        TheUser.weight = weight;
-        TheUser.daily_water = dailyWater;
-        await TheUser.save()
-        res.status(201).json({message: "New infomations saved!!"});
-        
-    } catch(err: any){
-        
-        if (err instanceof ErrorHandler) {
-        return res.status(err.statusCode).json({ message: err.message });
-        }
-        return res.status(500).json({message: 'Server Error!'});
-    }
-}
-
 export let getTheUserLoggedInInfo = async ( req: Request, res: Response, next: NextFunction) => {
     const authHeader = req.header('Authorization') as string;
     const token = authHeader.replace('Bearer ', '');
@@ -161,30 +128,58 @@ export let getTheUserLoggedInInfo = async ( req: Request, res: Response, next: N
     }
 }
 
-export const updateUsers = async (req: Request, res: Response, next: NextFunction) => {
+export const updateUser = async (req: Request, res: Response) => {
     const authHeader = req.header('Authorization') as string;
     const token = authHeader.replace('Bearer ', '');
     const secretKey = process.env.TOKEN_SECRET_KEY as string;
     const decoded = jwt.verify(token, secretKey) as AuthTokenPayload
     const {name, email, password, phone_number, activity_level, climate_type, weight, daily_water} = req.body
+    console.log(req.body)
     try{
         const emailUser = decoded.email;
         const TheUser = await User.findOne({email: emailUser})
         if(!TheUser){
             throw new ErrorHandler(404, 'User not found!');
         }
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
         TheUser.name = name;
         TheUser.email = email;
         TheUser.phone_number = phone_number;
-        TheUser.password = hashedPassword;
         TheUser.activity_level = activity_level;
         TheUser.climate_type = climate_type;
         TheUser.weight = weight;
         TheUser.daily_water = daily_water;
+
+
+        if (password && password.trim() !== "") {
+            const salt = await bcrypt.genSalt(10);
+            TheUser.password = await bcrypt.hash(password, salt);
+        }
+
         await TheUser.save();
-        res.status(200).json({message: 'User updated!'});
+        return res.status(200).json({ message: 'User updated successfully' });
+    } catch(err: any){
+        if( err instanceof ErrorHandler){
+            return res.status(err.statusCode).json({message: err.message})
+        }
+        return res.status(500).json({message: 'Server Error!'})
+    }
+}
+
+export const updateWaterIntake = async (req: Request, res: Response) => {
+    const authHeader = req.header('Authorization') as string;
+    const token = authHeader.replace('Bearer ', '');
+    const secretKey = process.env.TOKEN_SECRET_KEY as string;
+    const decoded = jwt.verify(token, secretKey) as AuthTokenPayload
+    const {amount_intake} = req.body
+    try{
+        const emailUser = decoded.email;
+        const TheUser = await User.findOne({email: emailUser})
+        if(!TheUser){
+            throw new ErrorHandler(404, 'User not found!');
+        }
+        TheUser.amount_intake = amount_intake;
+        await TheUser.save();
+        return res.status(200).json({message: "Water Intake updated successfully"})
     } catch(err: any){
         if( err instanceof ErrorHandler){
             return res.status(err.statusCode).json({message: err.message})

@@ -23,8 +23,10 @@ type UserData = {
   name: string;
   weight: number;
   height: number;
-  ammout_intake: number;
+  amount_intake: number;
   dailyWater: number;
+  activity_level: string;
+  climate_type: string;
 };
 
 
@@ -36,56 +38,6 @@ interface WaterDropProps {
   currentHydration: number;
   dailyGoal: number;
 }
-
-// Componente da gota de água animada simplificado
-const WaterDrop: React.FC<WaterDropProps> = ({ waterLevel, currentHydration, dailyGoal }) => {
-  const dropHeight = 280;
-  
-  return (
-    <View style={styles.waterDropContainer}>
-      {/* Container da gota */}
-      <View style={styles.dropOutline}>
-        {/* Água dentro da gota */}
-        <Animated.View 
-          style={[
-            styles.waterFill,
-            {
-              height: waterLevel.interpolate({
-                inputRange: [0, 1],
-                outputRange: ['0%', '85%'],
-              }),
-            }
-          ]} 
-        />
-        
-        {/* Contorno da gota */}
-        <Svg width={180} height={dropHeight} style={styles.waterDropSvg}>
-          <Path
-            d="M90 20 C40 20 20 90 20 150 C20 210 60 260 90 260 C120 260 160 210 160 150 C160 90 140 20 90 20 Z"
-            fill="none"
-            stroke="#60A7D2"
-            strokeWidth="3"
-          />
-        </Svg>
-      </View>
-      
-      {/* Indicador de nível */}
-      <View style={styles.waterLevelIndicator}>
-        <Text style={styles.waterLevelText}>
-          {currentHydration}ml
-        </Text>
-        <Text style={styles.waterLevelSubtext}>
-          {Math.round((currentHydration / dailyGoal) * 100)}%
-        </Text>
-      </View>
-      
-      {/* Bolhas de ar animadas */}
-      <Animated.View style={[styles.bubble, styles.bubble1]} />
-      <Animated.View style={[styles.bubble, styles.bubble2]} />
-      <Animated.View style={[styles.bubble, styles.bubble3]} />
-    </View>
-  );
-};
 
 const HydrationTracker: React.FC = () => {
   const navigation = useNavigation();
@@ -100,8 +52,10 @@ const HydrationTracker: React.FC = () => {
   name: "User123",
   weight: 80,
   height: 190,
-  ammout_intake: 0,
+  amount_intake: 0,
   dailyWater: 2500,
+  activity_level: 'sedentary',
+  climate_type: 'cold'
 })
 
 useEffect( () => {
@@ -110,14 +64,14 @@ useEffect( () => {
     const res = await axios.get('http://10.0.2.2:3001/user/logged',{
           headers: { Authorization: `Bearer ${token}` },
     });
-    const {name,ammout_intake, height, weight, daily_water } = res.data.data
+    const {name,amount_intake, height, weight, daily_water } = res.data.data
     setUserData((prev) => ({
       ...prev,
       name: name,
       height: height,
-      weight: weight ?? 70,
-      intake: ammout_intake,
-      dailyWater: daily_water ?? 2500,
+      weight: weight,
+      amount_intake: amount_intake,
+      dailyWater: daily_water,
     }));
   }
     getUserData();
@@ -150,9 +104,9 @@ useEffect( () => {
     ]).start();
   };
 
-  const calculateWaterLevel = (amount: number): void => {
-    const newTotal = Math.min(userData.ammout_intake + amount, userData.dailyWater);
-    const newPercentage = Math.min(newTotal / userData.dailyWater, 1);
+  const calculateWaterLevel = async (amount: number) => {
+    userData.amount_intake = Math.min((userData.amount_intake + amount), userData.dailyWater);
+    const newPercentage = Math.min(userData.amount_intake / userData.dailyWater, 1);
 
     // Animação do nível da água
     Animated.spring(waterLevel, {
@@ -165,9 +119,58 @@ useEffect( () => {
     // Animação das bolhas
     animateBubbles();
 
-    setCurrentHydration(newTotal);
+    
     setSelectedAmount(amount);
+    setCurrentHydration( userData.amount_intake);
+    const token = await AsyncStorage.getItem("authToken");
+    const res = await axios.put('http://10.0.2.2:3001/user/waterIntake', {amount_intake: userData.amount_intake}, {
+      headers: {
+        Authorization : `Bearer ${token}`
+      },
+    })
   };
+  // Componente da gota de água animada simplificado
+const WaterDrop: React.FC<WaterDropProps> = ({ waterLevel, currentHydration, dailyGoal }) => {
+  const dropHeight = 280;
+  
+  return (
+    <View style={styles.waterDropContainer}>
+      {/* Container da gota */}
+      <View style={styles.dropOutline}>
+        {/* Água dentro da gota */}
+        <Animated.View 
+          style={[
+            styles.waterFill,
+            {
+              height: waterLevel.interpolate({
+                inputRange: [0, 1],
+                outputRange: ['0%', '85%'],
+              }),
+            }
+          ]} 
+        />
+        
+        {/* Contorno da gota */}
+        
+      </View>
+      
+      {/* Indicador de nível */}
+      <View style={styles.waterLevelIndicator}>
+        <Text style={styles.waterLevelText}>
+          {currentHydration}ml
+        </Text>
+        <Text style={styles.waterLevelSubtext}>
+          {Math.round((currentHydration/ dailyGoal) * 100)}%
+        </Text>
+      </View>
+      
+      {/* Bolhas de ar animadas */}
+      <Animated.View style={[styles.bubble, styles.bubble1]} />
+      <Animated.View style={[styles.bubble, styles.bubble2]} />
+      <Animated.View style={[styles.bubble, styles.bubble3]} />
+    </View>
+  );
+};
 
   const resetHydration = (): void => {
     Animated.spring(waterLevel, {
@@ -176,9 +179,9 @@ useEffect( () => {
       friction: 10,
       useNativeDriver: false,
     }).start();
-    
     setCurrentHydration(0);
     setSelectedAmount(250);
+    userData.amount_intake = 0;   
   };
 
   // Estilos animados para as bolhas
@@ -267,7 +270,7 @@ useEffect( () => {
               </View>
               <View style={styles.goalProgress}>
                 <Text style={styles.goalPercentage}>
-                  {Math.round((userData.ammout_intake / userData.dailyWater) * 100)}%
+                  {Math.round((userData.amount_intake / userData.dailyWater) * 100)}%
                 </Text>
                 <Text style={styles.goalSubtext}>Completed</Text>
               </View>
@@ -295,7 +298,7 @@ useEffect( () => {
         <View style={styles.waterSection}>
           <WaterDrop 
             waterLevel={waterLevel} 
-            currentHydration={userData.ammout_intake}
+            currentHydration={userData.amount_intake}
             dailyGoal={userData.dailyWater}
           />
         </View>
@@ -336,14 +339,14 @@ useEffect( () => {
         <View style={styles.statsGrid}>
           <View style={styles.statCard}>
             <Ionicons name="water-outline" size={24} color="#60A7D2" />
-            <Text style={styles.statValue}>{userData.ammout_intake}ml</Text>
+            <Text style={styles.statValue}>{userData.amount_intake}ml</Text>
             <Text style={styles.statLabel}>Today</Text>
           </View>
           
           <View style={styles.statCard}>
             <Ionicons name="trophy-outline" size={24} color="#60A7D2" />
             <Text style={styles.statValue}>
-              {Math.round((userData.ammout_intake / userData.dailyWater) * 100)}%
+              {Math.round((userData.amount_intake / userData.dailyWater) * 100)}%
             </Text>
             <Text style={styles.statLabel}>Progress</Text>
           </View>
@@ -351,7 +354,7 @@ useEffect( () => {
           <View style={styles.statCard}>
             <Ionicons name="time-outline" size={24} color="#60A7D2" />
             <Text style={styles.statValue}>
-              {Math.ceil((userData.dailyWater - userData.ammout_intake) / 250)}
+              {Math.ceil((userData.dailyWater - userData.amount_intake) / 250)}
             </Text>
             <Text style={styles.statLabel}>Cups Left</Text>
           </View>
@@ -439,6 +442,7 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 30,
   },
   headerContent: {
+    display: "flex",
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -470,7 +474,7 @@ const styles = StyleSheet.create({
   },
   goalCard: {
     marginHorizontal: 24,
-    marginTop: -40,
+    marginTop: 20,
     borderRadius: 20,
     shadowColor: "#60A7D2",
     shadowOffset: { width: 0, height: 10 },

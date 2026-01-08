@@ -121,7 +121,6 @@ useEffect(() => {
       const locationID = await AsyncStorage.getItem("pointID") || '69592e433e83bedc149ff86a';
       try{
         const res = await axios.get(`http://10.0.2.2:3001/waterPoint/${locationID}`)
-        console.log(res.data.data)
         setTheLocation(res.data.data);
       } catch(err){
         console.error(err)

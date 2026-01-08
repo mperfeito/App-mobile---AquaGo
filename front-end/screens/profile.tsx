@@ -73,7 +73,7 @@ export default () => {
 
 
   const [isEditing, setIsEditing] = useState(false);
-  const [password, setPassword] = useState("");
+  const [password, setPassword] = useState<string>("");
 
   const activityLevels: { value: ActivityLevel; label: string; icon: string }[] = [
     { value: "sedentary", label: "Sedentary", icon: "desktop-outline" },
@@ -102,7 +102,8 @@ export default () => {
         activity_level: userData.activityLevel,
         daily_water: userData.dailyWaterGoal
       }
-      const res = await axios.patch('http://10.0.2.2:3001/user',
+      setPassword("");
+      const res = await axios.put('http://10.0.2.2:3001/user',
           payload,
           {
             headers: {
@@ -112,7 +113,6 @@ export default () => {
           } 
       )
       .then(res => {
-        console.log(res)
         Alert.alert("Success", "Profile updated successfully!");
       })
       .catch(err=> 
@@ -251,7 +251,6 @@ export default () => {
                 <Ionicons name="lock-closed-outline" size={20} color="#60A7D2" style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
-                  value={password}
                   onChangeText={setPassword}
                   secureTextEntry
                   placeholder="Enter new password"

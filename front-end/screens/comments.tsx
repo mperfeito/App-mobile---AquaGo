@@ -203,7 +203,6 @@ export default () => {
 }, []);
 
 useEffect(() => {
-  console.log("Updated commentToSave:", commentToSave);
 }, [commentToSave]);
 
   const calculateTime = async (date: string) => {
@@ -264,7 +263,7 @@ useEffect(() => {
         [
           {
             text: "TRY AGAIN",
-            onPress: () => navigation.navigate('Comment'),
+            onPress: () => navigation.navigate('Comments'),
           },
         ]
       );
