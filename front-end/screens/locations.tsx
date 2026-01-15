@@ -79,7 +79,7 @@ export default () => {
     { key: 'all', label: 'All', icon: 'apps' },
     { key: 'favorite', label: 'Favorites', icon: 'heart' },
     { key: 'fountain', label: 'Fountains', icon: 'water' },
-    { key: 'refill_station', label: 'Refill Stations', icon: 'refresh' },
+    { key: 'tap', label: 'taps', icon: 'fitness' },
     { key: 'recent', label: 'Recent', icon: 'time' }
   ];
 

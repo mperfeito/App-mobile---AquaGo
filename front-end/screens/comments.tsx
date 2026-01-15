@@ -237,8 +237,6 @@ const pickImage = async () => {
       aspect: [4, 3],
       quality: 1,
     });
-
-    console.log(result);
     
     if (!result.canceled) {
       const uri = result.assets[0].uri;
@@ -552,7 +550,7 @@ const res = await axios.post(
             {showComments && (
               <>
               {comments.map((comment) => (
-                <View style={styles.commentCard}>
+                <View style={styles.commentCard} key={comment.id}>
                   <View style={styles.commentHeader}>
                     <View style={styles.commentUser}>
                       <Image
@@ -563,7 +561,9 @@ const res = await axios.post(
                         <Text style={styles.userName} key={comment.user_email}>{comment.user_email}</Text>
                         <View style={styles.commentRating}>
                           {comment.rating.map((comment) => (
+                            <React.Fragment>
                             <Ionicons key={comment} name="star" size={12} color="#FFD700" />
+                            </React.Fragment>
                           ))}
                         </View>
                       </View>
@@ -580,7 +580,7 @@ const res = await axios.post(
                   />
 )}
                 </View>
-              ))}  
+              ))}
               </>
             )}
           </View>
