@@ -19,6 +19,7 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import axios from 'axios';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {jwtDecode} from "jwt-decode";
+import * as ImagePicker from 'expo-image-picker';
 
 
 type locationObj = {
@@ -44,16 +45,24 @@ type CommentObj = {
   point_id: string,
   rating: number[],
   comment: string,
+  image_url: string | null,
   created_at: string,
 };
 
 type newCommentObj = {
   rating: number,
   comment: string,
+  uri: string | null,
+  type: string | null
 };
 
 type decode = {
   email: string,
+}
+
+type newImgObj = {
+  uri: string,
+  type: string,
 }
 
 
@@ -132,10 +141,11 @@ export default () => {
     point_id: "692c6c32b9dcd82c054b1e7a",
     rating: [1,2,3],
     comment: "Love this place!",
+    image_url: null,
     created_at: "2026-01-06T12:30:00.000Z"
 
   }]);
-  const [commentToSave, setCommentToSave] = useState<newCommentObj>({rating: 0, comment: ""})
+  const [commentToSave, setCommentToSave] = useState<newCommentObj>({rating: 0, comment: "", uri: null, type: null})
   const [comment, setComment] = useState("");
   const [rating, setRating] = useState(0);
   const [showComments, setShowComments] = useState(true);
@@ -154,6 +164,11 @@ export default () => {
       closing_hour: 24
     }
   });
+
+  const [newImage, setNewImage] = useState<newImgObj>({
+    uri: "Em Espera",
+    type: "Em Espera",
+  })
 
   useEffect(() => {
   try{
@@ -205,6 +220,38 @@ export default () => {
 useEffect(() => {
 }, [commentToSave]);
 
+useEffect(() => {
+}, [newImage]);
+
+const pickImage = async () => {
+
+  const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (!permissionResult.granted) {
+      Alert.alert('Permission required', 'Permission to access the media library is required.');
+      return;
+    }
+  let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images', 'videos'],
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    console.log(result);
+    
+    if (!result.canceled) {
+      const uri = result.assets[0].uri;
+      const type = result.assets[0].mimeType;
+      if((type != undefined)){
+        setNewImage(
+         { uri: uri,
+          type: type
+        });
+      }
+    }
+};
+
   const calculateTime = async (date: string) => {
     const now = new Date();
     let dateD: Date = new Date(date)
@@ -219,16 +266,11 @@ useEffect(() => {
     console.log(`Transport selected: ${transport}`);
   };
 
-  const handleAddPhoto = () => {
-    alert("Open camera or photo library");
-  };
-
   const handleSave = async () => {
     if (comment.trim() === "") {
       alert("Please add a comment before saving");
       return;
     }
-    console.log(comment)
     const locationID = await AsyncStorage.getItem("pointID") || '69592e433e83bedc149ff86a';
     const token = await AsyncStorage.getItem("authToken");
     if(!token){
@@ -236,15 +278,31 @@ useEffect(() => {
       return;
     }
     const decoded = jwtDecode<decode>(token);
-    setCommentToSave({
-      rating: rating,
-      comment: comment
-    })
-    console.log(commentToSave.comment, commentToSave.rating)
-    const res = await axios.post(`http://10.0.2.2:3001/feedback/${decoded.email}/${locationID}`, commentToSave, 
-      {headers: {Authorization: `Bearer ${token}`}}
-    )
-    .then(res => {
+    const formData = new FormData();
+    formData.append("rating", rating.toString());
+    formData.append("comment", comment);
+
+    if (newImage.uri != "Em Espera") {
+    const file = {
+        uri: newImage.uri,
+        type: newImage.type,
+        name: newImage.uri.split("/").pop(),
+    } as any;
+    formData.append("image", file);
+}
+
+console.log(formData);
+
+const res = await axios.post(
+    `http://10.0.2.2:3001/feedback/${decoded.email}/${locationID}`,
+    formData,
+    {
+        headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+        },
+    }
+).then(res => {
       Alert.alert(
         "Sucess",
         `Your comment was sucessfully saved`,
@@ -515,6 +573,12 @@ useEffect(() => {
                   <Text style={styles.commentText} key={comment.comment}>
                     {comment.comment}
                   </Text>
+                  {comment.image_url && (
+                  <Image
+                    source={{ uri: comment.image_url }}
+                    style={{ width: 250, height: 200 }}
+                  />
+)}
                 </View>
               ))}  
               </>
@@ -553,7 +617,7 @@ useEffect(() => {
 
             <TouchableOpacity 
               style={styles.addPhotoButton}
-              onPress={handleAddPhoto}
+              onPress={pickImage}
             >
               <LinearGradient
                 colors={['#60A7D2', '#4A90BF']}

@@ -8,7 +8,7 @@ interface AuthTokenPayload {
 }
 
 export const registerFeedback = async (req: Request, res: Response, next: NextFunction) => {
-    const {rating, comment} = req.body;
+    const {rating, comment, uri, type} = req.body;
     const {user_email, waterPoint_id} = req.params;
     try{
         if(!comment){
@@ -17,14 +17,27 @@ export const registerFeedback = async (req: Request, res: Response, next: NextFu
         if(!rating){
             throw new ErrorHandler(400, 'Please rate the point!');
         }
+        const imageUrl = req.file ? req.file.path : null;
+        if(imageUrl == null){
+            const newFeedback = new Feedback({
+                user_email,
+                point_id: waterPoint_id,
+                rating, 
+                comment
+            });
+            await newFeedback.save()
+            return res.status(201).json({message: 'New feedback registered!'})
+        } else {
         const newFeedback = new Feedback({
             user_email,
             point_id: waterPoint_id,
-            rating, 
-            comment
-        });
+            rating,
+            comment,
+            image_url: imageUrl
+        })
         await newFeedback.save()
         return res.status(201).json({message: 'New feedback registered!'})
+        }
     } catch(err: any){
 
         if (err instanceof ErrorHandler) {

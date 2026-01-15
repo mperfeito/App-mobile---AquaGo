@@ -1,12 +1,15 @@
 import express, { Request, Response, NextFunction } from "express";
 import connectDB from '../back-end/models/connect';
 import cors from 'cors';
+import dotenv from "dotenv";
 
 
 const app = express();
 app.use(express.json());
+app.use(express.urlencoded({extended:true}));
 app.use(cors());
-require('dotenv').config();
+
+dotenv.config();
 
 // Connect to MongoDB
 connectDB();
@@ -18,7 +21,7 @@ app.use("/feedback", require('../back-end/routes/feedbackRoutes'));
 
 // Check if server is listening
 app.get('/', (req: Request, res: Response, next: NextFunction) => {
-  res.json('Servidor rodando poha!!');
+  res.json('Server is listening!!');
 })
 
 // Error MiddleWare
